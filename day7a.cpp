@@ -105,19 +105,15 @@ hand_t findHandType(string hand){
 class Hand{
     public:
         hand_t hand_type;
-        int first;
-        int second;
-        int third;
-        int fourth;
-        int fifth;
+        int values[5];
         int value;
         string hd;
     Hand(string hand, int v){
-        first = charValue(hand.at(0));
-        second = charValue(hand.at(1));
-        third = charValue(hand.at(2));
-        fourth = charValue(hand.at(3));
-        fifth = charValue(hand.at(4));
+        values[0] = charValue(hand.at(0));
+        values[1] = charValue(hand.at(1));
+        values[2] = charValue(hand.at(2));
+        values[3] = charValue(hand.at(3));
+        values[4] = charValue(hand.at(4));
         hand_type = findHandType(hand);
         value = v;
         hd = hand;
@@ -131,45 +127,12 @@ class Hand{
             return 1;
         }
         else{
-            if (first > h2.first){
-                return 0;
-            }
-            else if (first < h2.first){
-                return 1;
-            }
-            else{
-                if (second > h2.second){
-                return 0;
+            for (int i = 0; i < 5;i++){
+                if (values[i] > h2.values[i]){
+                    return 0;
                 }
-                else if (second < h2.second){
+                else if(values[i] < h2.values[i]){
                     return 1;
-                }
-                else{
-                    if (third > h2.third){
-                        return 0;
-                    }
-                    else if (third < h2.third){
-                        return 1;
-                    }
-                    else{
-                        if (fourth > h2.fourth){
-                            return 0;
-                        }
-                        else if (fourth < h2.fourth){
-                            return 1;
-                        }
-                        else{
-                            if (fifth > h2.fifth){
-                                return 0;
-                            }
-                            else if (fifth < h2.fifth){
-                                return 1;
-                            }
-                            else{
-                                return 2;
-                            }
-                        }
-                    }
                 }
             }
         }
