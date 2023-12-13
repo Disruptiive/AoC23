@@ -39,4 +39,17 @@ vector<string> splitAtEvery(string line,char c){
     return lines;
 }
 
+template <typename T>
+void print2dArray(vector<vector<T>> arr, string seperator = "\0"){
+    for (size_t i = 0; i < arr.size(); i++){
+        for (size_t j = 0; j < arr[i].size(); j++){
+            cout << arr[i][j] ;
+            if (j != arr[i].size() - 1){
+                cout << seperator;
+            }
+        }
+        cout <<endl;
+    }
+}
+
 #endif
