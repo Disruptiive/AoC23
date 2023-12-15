@@ -29,14 +29,12 @@ enum symbols{
     starting,
 };
 
-enum dir_x{
+enum directions{
     Right,
     Left,
-};
-
-enum dir_y{
     Up,
     Down,
+    NP,
 };
 
 class Pipe{
@@ -55,7 +53,26 @@ class Pipe{
             next = nullptr;
         }
 };
-
+void createBoundaries(Pipe *curr, vector<vector<directions>> &dirs){
+    if (curr->prev == nullptr){
+        cout << "Must be root" << endl;
+        return;
+    }
+    else{
+        if (curr->prev->coordinates.x == curr->coordinates.x && curr->prev->coordinates.y > curr->coordinates.y){
+            dirs[curr->coordinates.x][curr->coordinates.y] = Left;
+        }
+        if (curr->prev->coordinates.x == curr->coordinates.x && curr->prev->coordinates.y < curr->coordinates.y){
+            dirs[curr->coordinates.x][curr->coordinates.y] = Right;
+        }
+        if (curr->prev->coordinates.x > curr->coordinates.x && curr->prev->coordinates.y == curr->coordinates.y){
+            dirs[curr->coordinates.x][curr->coordinates.y] = Up;
+        }
+        if (curr->prev->coordinates.x < curr->coordinates.x && curr->prev->coordinates.y == curr->coordinates.y){
+            dirs[curr->coordinates.x][curr->coordinates.y] = Down;
+        }
+    }
+}
 void findNext(Pipe *curr, vector<vector<char>> arr, Pipe* root, int &way, int &distance){
     //cout << "Im currently in: " << curr->coordinates.x << " , " << curr->coordinates.y << " Char: " << arr[curr->coordinates.x][curr->coordinates.y] << endl;
 
@@ -201,6 +218,59 @@ void findNext(Pipe *curr, vector<vector<char>> arr, Pipe* root, int &way, int &d
     }
 }
 
+
+void calculateEnclosed(vector<vector<directions>> dirs, vector<vector<char>> chars){
+    vector<coords> possible;
+    for (int i = 0; i<dirs.size();i++){
+        int up_location = -1;
+        int down_location = -1;
+        for(int j = 0; j<dirs[i].size();j++){
+            if (dirs[i][j] == Up){
+                up_location = j;
+            }
+            else if (dirs[i][j] == Down){
+                down_location = j;
+                if (up_location>-1){
+                    for (int k = up_location + 1; k < down_location ;k++){
+                        if (chars[i][k] == '.'){
+                            cout << "Xd" << endl;
+                            possible.push_back({i,k});
+                        }
+                    }
+                    up_location = -1;
+                }
+            }
+        }
+    }
+    for (int j = 0; j<dirs[0].size();j++){
+        int right_location = -1;
+        int left_location = -1;
+        for(int i = 0; i<dirs.size();i++){
+            if (dirs[i][j] == Right){
+                right_location = i;
+            }
+            else if (dirs[i][j] == Down){
+                left_location = i;
+                if (right_location>-1){
+                    for (int k = right_location + 1; k < left_location ;k++){
+                        if (chars[k][j] == '.'){
+                                possible.push_back({k,j});                            
+                        }
+                    }
+                    right_location = -1;
+                }
+            }
+        }
+    }
+    map<coords,int> mp;
+    int cnt = 0;
+
+   
+
+    cout << possible.size() << endl;
+    
+}
+
 int main(){
     vector<string> lines = fileSplitLines("day10.txt");
     vector<vector<char>> chars;
@@ -228,8 +298,9 @@ int main(){
     int way = 1;
     bool finished = false;
     map<vector<int>,int> mp;
+    Pipe *root;
     while (!finished && way<5){
-        Pipe *root = new Pipe(chars[starting_pos.x][starting_pos.y],starting_pos.x,starting_pos.y, nullptr);
+        root = new Pipe(chars[starting_pos.x][starting_pos.y],starting_pos.x,starting_pos.y, nullptr);
         auto curr_pipe = root;
         int distance = -1;
         mp.clear();
@@ -271,8 +342,38 @@ int main(){
 
     cout << "Max distance: " << sum/2 << endl;
 
+    auto curr_pipe = root;
+    vector<vector<directions>> dirs;
+    
+    for(size_t i = 0; i < chars.size();i++){
+        vector<directions> row;
+        for(size_t j = 0; j < chars[i].size();j++){
+            row.push_back(NP);
+        }
+        dirs.push_back(row);
+    }
+    while(curr_pipe->coordinates.x != root->coordinates.x || curr_pipe->coordinates.y != root->coordinates.y || curr_pipe == root){
+        createBoundaries(curr_pipe, dirs);
+        curr_pipe = curr_pipe->next;
+    }
+
+    calculateEnclosed(dirs,chars);
+    /*
+    int cnt = 0;
+    
+    for (int i=0;i<chars.size();i++){
+        for (int j=0;j<chars[i].size();j++){
+            if (chars[i][j] == '.'){
+                if (checkAllconditions(i,j,dirs)){
+                    cnt++;
+                }
+            }
+        }
+    }
+
+    cout << cnt << endl;
+    
     //print2dArray(rows,",");
-    cout << rows[0][0] << endl;
     /*
     int curr_row = 0;
     bool can_be_pipe = false;
