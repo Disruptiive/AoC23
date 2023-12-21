@@ -36,6 +36,19 @@ struct Line{
     int s;
 };
 
+struct Range{
+    int x_min;
+    int x_max;
+    int m_min;
+    int m_max;
+    int a_min;
+    int a_max;
+    int s_min;
+    int s_max;
+    string label;
+};
+
+
 size_t createMap(std::vector<string> lines,  std::map<string,Condition> &mp){
     for(int i = 0;i<lines.size();i++){
         if (lines[i].empty()){
@@ -119,6 +132,399 @@ size_t createMap(std::vector<string> lines,  std::map<string,Condition> &mp){
     return 0;
 }
 
+string processLabel(Line rating, Condition condition){
+    string end_label;
+    for(int i=0;i<condition.conditions.size();i++){
+        auto c = condition.conditions[i];
+        if(std::get<0>(c) == x){
+            if(std::get<1>(c) == more_than){
+                if (rating.x > std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+
+            else if(std::get<1>(c) == less_than){
+                if (rating.x < std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+        }
+        else if(std::get<0>(c) == m){
+            if(std::get<1>(c) == more_than){
+                if (rating.m > std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+            else if(std::get<1>(c) == less_than){
+                if (rating.m < std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+        }
+        else if(std::get<0>(c) == a){
+            if(std::get<1>(c) == more_than){
+                if (rating.a > std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+            else if(std::get<1>(c) == less_than){
+                if (rating.a < std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+        }
+        else if(std::get<0>(c) == s){
+            if(std::get<1>(c) == more_than){
+                if (rating.s > std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+            else if(std::get<1>(c) == less_than){
+                if (rating.s < std::get<2>(c)){
+                    end_label = std::get<3>(c);
+                    return end_label;
+                }
+            }
+        }
+    }
+    return condition.else_name;
+}
+
+int processRating(Line rating, std::map<string,Condition> mp){
+    auto label_name = (string)"in";
+    while (label_name != "A" && label_name != "R"){
+        auto label = mp[label_name];
+        label_name = processLabel(rating,label);
+    }
+
+    if (label_name == "A") {
+        return rating.x+rating.m+rating.a+rating.s;
+    }
+    else if (label_name == "R") {
+        return 0;
+    }
+    else{
+        cout<<label_name<<endl;
+        return 0;
+    }
+}
+
+void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &accepted, std::vector<Range> &rejected,Condition condition){
+    string end_label;
+    for(int i=0;i<condition.conditions.size();i++){
+        auto c = condition.conditions[i];
+        if(std::get<0>(c) == x){
+            if(std::get<1>(c) == more_than){
+                if(std::get<2>(c) > r.x_max){
+                    continue;
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({std::get<2>(c)+1,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({std::get<2>(c)+1,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({std::get<2>(c)+1,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                    } 
+                    r.x_max = std::get<2>(c);
+                }
+            }
+
+            else if(std::get<1>(c) == less_than){
+                if(std::get<2>(c) > r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    continue;
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,std::get<2>(c),r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,std::get<2>(c),r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,std::get<2>(c),r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                    } 
+                    r.x_min = std::get<2>(c)+1;
+                }
+            }
+        }
+        else if(std::get<0>(c) == m){
+            if(std::get<1>(c) == more_than){
+                if(std::get<2>(c) > r.x_max){
+                    continue;
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,std::get<2>(c)+1,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,std::get<2>(c)+1,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,std::get<2>(c)+1,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                    } 
+                    r.m_max = std::get<2>(c);
+                }
+            }
+            else if(std::get<1>(c) == less_than){
+                if(std::get<2>(c) > r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    continue;
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,std::get<2>(c),r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,std::get<2>(c),r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,std::get<2>(c),r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                    }
+                    r.m_min = std::get<2>(c)+1; 
+                }
+            }
+        }
+        else if(std::get<0>(c) == a){
+            if(std::get<1>(c) == more_than){
+                if(std::get<2>(c) > r.x_max){
+                    continue;
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,std::get<2>(c)+1,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,std::get<2>(c)+1,r.a_max,r.s_min,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,std::get<2>(c)+1,r.a_max,r.s_min,r.s_max,"R"});
+                    }
+                    r.a_max = std::get<2>(c); 
+                }
+            }
+            else if(std::get<1>(c) == less_than){
+                if(std::get<2>(c) > r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    continue;
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,std::get<2>(c),r.s_min,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,std::get<2>(c),r.s_min,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,std::get<2>(c),r.s_min,r.s_max,"R"});
+                    } 
+                    r.a_min = std::get<2>(c)+1;
+                }
+            }
+        }
+        else if(std::get<0>(c) == s){
+            if(std::get<1>(c) == more_than){
+                if(std::get<2>(c) > r.x_max){
+                    continue;
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,std::get<2>(c)+1,r.s_max,std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,std::get<2>(c)+1,r.s_max,"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,std::get<2>(c)+1,r.s_max,"R"});
+                    } 
+                    r.s_max = std::get<2>(c);
+                }
+            }
+            else if(std::get<1>(c) == less_than){
+               if(std::get<2>(c) > r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+                        return;
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+                        return;
+                    } 
+                }
+                else if(std::get<2>(c) < r.x_min){
+                    continue;
+                }
+                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                    if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
+                        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,std::get<2>(c),std::get<3>(c)});
+                    }
+                    else if(std::get<3>(c)=="A"){
+                        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,std::get<2>(c),"A"});
+                    }
+                    else if(std::get<3>(c)=="R"){
+                        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,std::get<2>(c),"R"});
+                    } 
+                    r.s_min = std::get<2>(c)+1;
+                }
+            }
+        }
+    }
+
+    if (condition.else_name != "A" && condition.else_name != "R"){
+        ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,condition.else_name});
+    }
+    else if(condition.else_name=="A"){
+        accepted.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"A"});
+    }
+    else if(condition.else_name=="R"){
+        rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
+    } 
+}
+
+void processRanges(std::vector<Range> &ranges, std::map<string,Condition> mp){
+    std::vector<Range> accepted, rejected;
+    while(ranges.size()>0){
+        Range r = ranges.back();
+        ranges.pop_back();
+        processOneRange(ranges,r,accepted,rejected,mp[r.label]);
+    }
+    
+    cout<<"Accepted:"<<endl;
+    for(int i=0;i<accepted.size();i++){
+        cout << accepted[i].x_min << " - " << accepted[i].x_max << "  " << accepted[i].m_min << " - " << accepted[i].m_max << "  " << accepted[i].a_min << " - " << accepted[i].a_max << "  " << accepted[i].s_min << " - " << accepted[i].s_max << endl;
+    }
+    cout << endl << endl << endl;
+    cout<<"Denied:"<<endl;
+    for(int i=0;i<accepted.size();i++){
+        cout << accepted[i].x_min << " - " << accepted[i].x_max << "  " << accepted[i].m_min << " - " << accepted[i].m_max << "  " << accepted[i].a_min << " - " << accepted[i].a_max << "  " << accepted[i].s_min << " - " << accepted[i].s_max << endl;
+    }
+   
+   /*
+    unsigned long long c = 0; unsigned long long l = 0;
+    for(int k=0;k<rejected.size();k++){
+        c += (rejected[k].x_max - rejected[k].x_min)*(rejected[k].m_max - rejected[k].m_min)*(rejected[k].a_max - rejected[k].a_min)*(rejected[k].s_max - rejected[k].s_min);
+
+    }
+
+    for(int k=0;k<accepted.size();k++){
+        l += (accepted[k].x_max - accepted[k].x_min)*(accepted[k].m_max - accepted[k].m_min)*(accepted[k].a_max - accepted[k].a_min)*(accepted[k].s_max - accepted[k].s_min);
+
+    }
+    auto x = (unsigned long long)4000*(unsigned long long)4000*(unsigned long long)4000*(unsigned long long)4000;
+    cout << c<< " " << l << endl;
+    cout << x << endl;
+     */
+}
+
 int main(){
     std::vector<string> lines = fileSplitLines("day19.txt");
     std::vector<Line> ratings;
@@ -138,8 +544,21 @@ int main(){
         ratings.push_back(l);
     }
 
-    cout << ratings.size() << endl;
+    unsigned long long c=0;
+    for(size_t i=0;i<ratings.size();i++){
+        c += processRating(ratings[i],mp);
+    } 
+
+    cout << "Part 1:) " << c << endl;
+
+    std::vector<Range> ranges;
+
+    ranges.push_back({1,4001,1,4001,1,4001,1,4001,"in"});
+
+    processRanges(ranges, mp);
     /*
+    cout << ratings.size() << endl;
+    
     for(int k = 0;k<mp["ntv"].conditions.size();k++){
         cout << std::get<0>(mp["ntv"].conditions[k]) << " " << std::get<1>(mp["ntv"].conditions[k]) << " " << std::get<2>(mp["ntv"].conditions[k]) << " " << std::get<3>(mp["ntv"].conditions[k]) << "  " << k << endl;
     }
