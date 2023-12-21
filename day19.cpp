@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <ostream>
 #include <tuple>
 #include <sstream>
 #include <algorithm>
@@ -220,6 +221,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
     string end_label;
     for(int i=0;i<condition.conditions.size();i++){
         auto c = condition.conditions[i];
+        // std::cout << "Label: " << std::get<3>(c) << " X: " << r.x_min << " - " << r.x_max << " M: " << r.m_min << " - " << r.m_max << " A: " << r.a_min << " - " << r.a_max << " S: " << r.s_min << " - " << r.s_max << std::endl;
         if(std::get<0>(c) == x){
             if(std::get<1>(c) == more_than){
                 if(std::get<2>(c) > r.x_max){
@@ -249,7 +251,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({std::get<2>(c)+1,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
                     } 
-                    r.x_max = std::get<2>(c);
+                    r.x_max = std::get<2>(c)+1;
                 }
             }
 
@@ -281,16 +283,16 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,std::get<2>(c),r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
                     } 
-                    r.x_min = std::get<2>(c)+1;
+                    r.x_min = std::get<2>(c);
                 }
             }
         }
         else if(std::get<0>(c) == m){
             if(std::get<1>(c) == more_than){
-                if(std::get<2>(c) > r.x_max){
+                if(std::get<2>(c) > r.m_max){
                     continue;
                 }
-                else if(std::get<2>(c) < r.x_min){
+                else if(std::get<2>(c) < r.m_min){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                         return;
@@ -304,7 +306,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                         return;
                     } 
                 }
-                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                else if(std::get<2>(c) > r.m_min && std::get<2>(c) < r.m_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,std::get<2>(c)+1,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                     }
@@ -314,11 +316,11 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,r.x_max,std::get<2>(c)+1,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,"R"});
                     } 
-                    r.m_max = std::get<2>(c);
+                    r.m_max = std::get<2>(c)+1;
                 }
             }
             else if(std::get<1>(c) == less_than){
-                if(std::get<2>(c) > r.x_max){
+                if(std::get<2>(c) > r.m_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                         return;
@@ -332,10 +334,10 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                         return;
                     } 
                 }
-                else if(std::get<2>(c) < r.x_min){
+                else if(std::get<2>(c) < r.m_min){
                     continue;
                 }
-                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                else if(std::get<2>(c) > r.m_min && std::get<2>(c) < r.m_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,std::get<2>(c),r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                     }
@@ -345,16 +347,16 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,r.x_max,r.m_min,std::get<2>(c),r.a_min,r.a_max,r.s_min,r.s_max,"R"});
                     }
-                    r.m_min = std::get<2>(c)+1; 
+                    r.m_min = std::get<2>(c); 
                 }
             }
         }
         else if(std::get<0>(c) == a){
             if(std::get<1>(c) == more_than){
-                if(std::get<2>(c) > r.x_max){
+                if(std::get<2>(c) > r.a_max){
                     continue;
                 }
-                else if(std::get<2>(c) < r.x_min){
+                else if(std::get<2>(c) < r.a_min){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                         return;
@@ -368,7 +370,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                         return;
                     } 
                 }
-                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                else if(std::get<2>(c) > r.a_min && std::get<2>(c) < r.a_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,std::get<2>(c)+1,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                     }
@@ -378,11 +380,11 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,std::get<2>(c)+1,r.a_max,r.s_min,r.s_max,"R"});
                     }
-                    r.a_max = std::get<2>(c); 
+                    r.a_max = std::get<2>(c)+1; 
                 }
             }
             else if(std::get<1>(c) == less_than){
-                if(std::get<2>(c) > r.x_max){
+                if(std::get<2>(c) > r.a_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                         return;
@@ -396,10 +398,10 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                         return;
                     } 
                 }
-                else if(std::get<2>(c) < r.x_min){
+                else if(std::get<2>(c) < r.a_min){
                     continue;
                 }
-                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                else if(std::get<2>(c) > r.a_min && std::get<2>(c) < r.a_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,std::get<2>(c),r.s_min,r.s_max,std::get<3>(c)});
                     }
@@ -409,16 +411,16 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,std::get<2>(c),r.s_min,r.s_max,"R"});
                     } 
-                    r.a_min = std::get<2>(c)+1;
+                    r.a_min = std::get<2>(c);
                 }
             }
         }
         else if(std::get<0>(c) == s){
             if(std::get<1>(c) == more_than){
-                if(std::get<2>(c) > r.x_max){
+                if(std::get<2>(c) > r.s_max){
                     continue;
                 }
-                else if(std::get<2>(c) < r.x_min){
+                else if(std::get<2>(c) < r.s_min){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                         return;
@@ -432,7 +434,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                         return;
                     } 
                 }
-                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                else if(std::get<2>(c) > r.s_min && std::get<2>(c) < r.s_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,std::get<2>(c)+1,r.s_max,std::get<3>(c)});
                     }
@@ -442,11 +444,11 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,std::get<2>(c)+1,r.s_max,"R"});
                     } 
-                    r.s_max = std::get<2>(c);
+                    r.s_max = std::get<2>(c)+1;
                 }
             }
             else if(std::get<1>(c) == less_than){
-               if(std::get<2>(c) > r.x_max){
+                if(std::get<2>(c) > r.s_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,r.s_max,std::get<3>(c)});
                         return;
@@ -460,10 +462,10 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                         return;
                     } 
                 }
-                else if(std::get<2>(c) < r.x_min){
+                else if(std::get<2>(c) < r.s_min){
                     continue;
                 }
-                else if(std::get<2>(c) > r.x_min && std::get<2>(c) < r.x_max){
+                else if(std::get<2>(c) > r.s_min && std::get<2>(c) < r.s_max){
                     if (std::get<3>(c)!="A" && std::get<3>(c) !="R"){
                         ranges.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,std::get<2>(c),std::get<3>(c)});
                     }
@@ -473,7 +475,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
                     else if(std::get<3>(c)=="R"){
                         rejected.push_back({r.x_min,r.x_max,r.m_min,r.m_max,r.a_min,r.a_max,r.s_min,std::get<2>(c),"R"});
                     } 
-                    r.s_min = std::get<2>(c)+1;
+                    r.s_min = std::get<2>(c);
                 }
             }
         }
@@ -490,7 +492,7 @@ void processOneRange(std::vector<Range> &ranges, Range r,std::vector<Range> &acc
     } 
 }
 
-void processRanges(std::vector<Range> &ranges, std::map<string,Condition> mp){
+unsigned long long processRanges(std::vector<Range> &ranges, std::map<string,Condition> mp){
     std::vector<Range> accepted, rejected;
     while(ranges.size()>0){
         Range r = ranges.back();
@@ -498,31 +500,12 @@ void processRanges(std::vector<Range> &ranges, std::map<string,Condition> mp){
         processOneRange(ranges,r,accepted,rejected,mp[r.label]);
     }
     
-    cout<<"Accepted:"<<endl;
-    for(int i=0;i<accepted.size();i++){
-        cout << accepted[i].x_min << " - " << accepted[i].x_max << "  " << accepted[i].m_min << " - " << accepted[i].m_max << "  " << accepted[i].a_min << " - " << accepted[i].a_max << "  " << accepted[i].s_min << " - " << accepted[i].s_max << endl;
-    }
-    cout << endl << endl << endl;
-    cout<<"Denied:"<<endl;
-    for(int i=0;i<accepted.size();i++){
-        cout << accepted[i].x_min << " - " << accepted[i].x_max << "  " << accepted[i].m_min << " - " << accepted[i].m_max << "  " << accepted[i].a_min << " - " << accepted[i].a_max << "  " << accepted[i].s_min << " - " << accepted[i].s_max << endl;
-    }
-   
-   /*
-    unsigned long long c = 0; unsigned long long l = 0;
-    for(int k=0;k<rejected.size();k++){
-        c += (rejected[k].x_max - rejected[k].x_min)*(rejected[k].m_max - rejected[k].m_min)*(rejected[k].a_max - rejected[k].a_min)*(rejected[k].s_max - rejected[k].s_min);
-
-    }
-
+    unsigned long long c = 0;
     for(int k=0;k<accepted.size();k++){
-        l += (accepted[k].x_max - accepted[k].x_min)*(accepted[k].m_max - accepted[k].m_min)*(accepted[k].a_max - accepted[k].a_min)*(accepted[k].s_max - accepted[k].s_min);
+        c += (unsigned long long)(accepted[k].x_max - accepted[k].x_min)*(unsigned long long)(accepted[k].m_max - accepted[k].m_min)*(unsigned long long)(accepted[k].a_max - accepted[k].a_min)*(unsigned long long)(accepted[k].s_max - accepted[k].s_min);
 
     }
-    auto x = (unsigned long long)4000*(unsigned long long)4000*(unsigned long long)4000*(unsigned long long)4000;
-    cout << c<< " " << l << endl;
-    cout << x << endl;
-     */
+    return c;
 }
 
 int main(){
@@ -555,7 +538,10 @@ int main(){
 
     ranges.push_back({1,4001,1,4001,1,4001,1,4001,"in"});
 
-    processRanges(ranges, mp);
+    c = processRanges(ranges, mp);
+
+    cout << "Part 2:) " << c << endl;
+
     /*
     cout << ratings.size() << endl;
     
